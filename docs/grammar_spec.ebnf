@@ -1,0 +1,62 @@
+(* B-Minor Front-End Grammar Specification (EBNF) *)
+(* Phase 1: Lexical & Syntactic Rules *)
+
+(* 1. Lexical Rules *)
+(* Reserved keywords have priority over identifiers *)
+(* Longest match (maximal munch) is applied at each position *)
+(* Whitespace (space, tab, CR, LF) and comments (//..., /*...*/) are skipped while updating line and column *)
+
+reserved_word  = "array" | "auto" | "boolean" | "char" | "else" | "false"
+               | "float" | "for" | "function" | "if" | "integer" | "return"
+               | "string" | "true" | "void" | "while" ;
+
+ident          = alpha , { alpha | num | "_" } ;
+alpha          = "a".."z" | "A".."Z" | "_" ;
+num            = "0".."9" ;
+
+integer_lit    = num , { num } ;
+real_lit       = num , { num } , "." , num , { num } ;
+rune_lit       = "'" , ( esc_seq | char_body ) , "'" ;
+text_lit       = '"' , { esc_seq | char_body } , '"' ;
+esc_seq        = "\" , ( "n" | "t" | "r" | "\" | '"' | "'" | "0" ) ;
+
+op_sym         = "++" | "--" | "<=" | ">=" | "==" | "!=" | "&&" | "||"
+               | "+" | "-" | "*" | "/" | "%" | "^" | "=" | "<" | ">" | "!" ;
+punct_sym      = "(" | ")" | "{" | "}" | "[" | "]" | ";" | ":" | "," ;
+
+(* 2. Syntactic Rules (LL / Left-Recursion-Free EBNF) *)
+translation_unit = { top_decl } , EOF ;
+top_decl         = var_definition | func_definition ;
+
+var_definition   = ident , ":" , type_expr , [ "=" , expression ] , ";" ;
+func_definition  = ident , ":" , "function" , type_expr , "(" , [ formal_list ] , ")" , ( compound_stmt | ";" ) ;
+formal_list      = formal_param , { "," , formal_param } ;
+formal_param     = ident , ":" , type_expr ;
+
+type_expr        = scalar_type | vector_type ;
+scalar_type      = "integer" | "boolean" | "char" | "string" | "float" | "void" | "auto" ;
+vector_type      = "array" , "[" , [ expression ] , "]" , type_expr ;
+
+compound_stmt    = "{" , { statement } , "}" ;
+statement        = cond_stmt | loop_while | loop_for | ret_stmt | simple_stmt | compound_stmt | var_definition ;
+
+cond_stmt        = "if" , "(" , expression , ")" , statement , [ "else" , statement ] ;
+loop_while       = "while" , "(" , expression , ")" , statement ;
+loop_for         = "for" , "(" , [ expression ] , ";" , [ expression ] , ";" , [ expression ] , ")" , statement ;
+ret_stmt         = "return" , [ expression ] , ";" ;
+simple_stmt      = [ expression ] , ";" ;
+
+expression       = assign_expr ;
+assign_expr      = or_expr , [ "=" , assign_expr ] ;
+or_expr          = and_expr , { "||" , and_expr } ;
+and_expr         = eq_expr , { "&&" , eq_expr } ;
+eq_expr          = rel_expr , { ( "==" | "!=" ) , rel_expr } ;
+rel_expr         = add_expr , { ( "<" | "<=" | ">" | ">=" ) , add_expr } ;
+add_expr         = mul_expr , { ( "+" | "-" ) , mul_expr } ;
+mul_expr         = unary_expr , { ( "*" | "/" | "%" ) , unary_expr } ;
+unary_expr       = ( "-" | "!" ) , unary_expr | suffix_expr ;
+suffix_expr      = atom_expr , { suffix_op } ;
+suffix_op        = "[" , expression , "]" | "(" , [ actual_list ] , ")" | "++" | "--" ;
+actual_list      = expression , { "," , expression } ;
+atom_expr        = integer_lit | real_lit | rune_lit | text_lit
+                 | "true" | "false" | ident | "(" , expression , ")" ;
