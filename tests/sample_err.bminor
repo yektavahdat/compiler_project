@@ -1,0 +1,12 @@
+// Sample with lexical and syntactic errors to verify error reporting & panic recovery
+
+bad_str: string = "unterminated string;
+broken_decl: integer = (10 + ;
+valid_after_err: integer = 42;
+
+check_fn: function void (x: integer) = {
+    if (x > 0 {
+        x = x - 1;
+    }
+    return;
+}

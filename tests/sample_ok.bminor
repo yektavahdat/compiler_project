@@ -1,0 +1,28 @@
+// Valid B-Minor sample program for Phase 1 front-end checks
+
+max_items: integer = 16;
+greeting: string = "B-Minor Phase 1 OK\n";
+
+compute_sum: function integer (n: integer) = {
+    acc: integer = 0;
+    idx: integer = 1;
+
+    while (idx <= n) {
+        if ((idx % 2) == 0) {
+            acc = acc + idx;
+        } else {
+            acc = acc + 1;
+        }
+        idx++;
+    }
+
+    return acc;
+}
+
+main: function integer () = {
+    total: integer = compute_sum(max_items);
+    if (total > 10 && max_items >= 1) {
+        return total;
+    }
+    return 0;
+}
